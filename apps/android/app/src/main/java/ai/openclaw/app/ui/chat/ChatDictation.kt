@@ -104,8 +104,13 @@ internal class AndroidChatDictationRecognizer(
   context: Context,
 ) : ChatDictationRecognizer {
   private val appContext = context.applicationContext
-  override val isAvailable: Boolean =
+  private val onDevice: Boolean =
     runCatching { SpeechRecognizer.isOnDeviceRecognitionAvailable(appContext) }.getOrDefault(false)
+
+  // CubeOS ships no system on-device recognizer; its default RecognitionService is an offline
+  // Whisper app, so fall back to the default service (asked to prefer offline) as Talk does.
+  override val isAvailable: Boolean =
+    onDevice || runCatching { SpeechRecognizer.isRecognitionAvailable(appContext) }.getOrDefault(false)
   private var generation = 0L
   private var recognizer: SpeechRecognizer? = null
 
@@ -117,7 +122,12 @@ internal class AndroidChatDictationRecognizer(
       if (operation == generation) onEvent(event)
     }
     retireRecognizer()
-    val active = SpeechRecognizer.createOnDeviceSpeechRecognizer(appContext)
+    val active =
+      if (onDevice) {
+        SpeechRecognizer.createOnDeviceSpeechRecognizer(appContext)
+      } else {
+        SpeechRecognizer.createSpeechRecognizer(appContext)
+      }
     active.setRecognitionListener(
       object : SpeechRecognitionListenerAdapter() {
         override fun onReadyForSpeech(params: Bundle?) {
