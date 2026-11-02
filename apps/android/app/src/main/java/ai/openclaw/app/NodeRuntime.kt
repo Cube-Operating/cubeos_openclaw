@@ -105,7 +105,9 @@ import ai.openclaw.app.voice.PreviewVoiceWakeRecognizer
 import ai.openclaw.app.voice.SystemSpeechSpeaker
 import ai.openclaw.app.voice.TalkAudioPlayer
 import ai.openclaw.app.voice.TalkFailureNotice
+import ai.openclaw.app.voice.TalkModeGatewayConfigParser
 import ai.openclaw.app.voice.TalkModeManager
+import ai.openclaw.app.voice.TalkModeRoute
 import ai.openclaw.app.voice.TalkPttOnceStart
 import ai.openclaw.app.voice.TalkPttStopPayload
 import ai.openclaw.app.voice.VoiceConversationRole
@@ -6699,11 +6701,30 @@ class NodeRuntime internal constructor(
       _talkSetupReadiness.value = GatewayTalkSetupReadiness.unverified()
       return
     }
-    val readiness =
+    val catalogReadiness =
       try {
         parseGatewayTalkSetupReadiness(requestGatewayObject(gatewayScope, "talk.catalog", "{}"))
       } catch (_: Throwable) {
         GatewayTalkSetupReadiness.unverified(GatewayTalkSetupIssue.CatalogLoadFailed)
+      }
+    // Explicit stt-tts Talk runs natively (device STT, chat.send, talk.speak), so an unconfigured
+    // realtime provider must not block starting it; TalkModeManager resolves the same route.
+    val nativeTalk =
+      catalogReadiness.realtimeTalk.requiresSetup &&
+        runCatching {
+          val config = requestGatewayObject(gatewayScope, "talk.config", "{}")?.get("config").asObjectOrNull()
+          TalkModeGatewayConfigParser.parse(config).route == TalkModeRoute.NativeConfigured
+        }.getOrDefault(false)
+    val readiness =
+      if (nativeTalk) {
+        catalogReadiness.copy(
+          realtimeTalk =
+            GatewayTalkSetupState.Unverified(
+              GatewayTalkSetupIssue.Targeted(GatewayTalkSetupTargetIssue.MissingReadiness, GatewayTalkSetupTarget.REALTIME_TALK),
+            ),
+        )
+      } else {
+        catalogReadiness
       }
     publishGatewayData(gatewayScope) { _talkSetupReadiness.value = readiness }
   }
