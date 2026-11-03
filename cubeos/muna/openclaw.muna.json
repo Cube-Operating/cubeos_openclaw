@@ -1,0 +1,193 @@
+{
+  "agents": {
+    "defaults": {
+      "models": {
+        "ollama/llama3.1:8b": {},
+        "ollama/qwen3:8b": {}
+      },
+      "model": {
+        "primary": "ollama/qwen3:4b",
+        "fallbacks": []
+      },
+      "systemAgent": {
+        "agentId": "muna"
+      },
+      "heartbeat": {
+        "agentId": "coordinator"
+      },
+      "workspace": "/home/ugoji-harry/.openclaw/workspace"
+    },
+    "ownership": "explicit",
+    "entries": {
+      "coordinator": {
+        "name": "coordinator",
+        "workspace": "/home/ugoji-harry/.openclaw/workspace/coordinator",
+        "agentDir": "/home/ugoji-harry/.openclaw/agents/coordinator/agent",
+        "identity": {
+          "name": "Chief of Staff",
+          "emoji": "\ud83e\udded",
+          "theme": "calm, accountable coordination"
+        },
+        "subagents": {
+          "allowAgents": [
+            "researcher",
+            "writer",
+            "reviewer"
+          ],
+          "delegationMode": "prefer"
+        }
+      },
+      "researcher": {
+        "name": "researcher",
+        "workspace": "/home/ugoji-harry/.openclaw/workspace/researcher",
+        "agentDir": "/home/ugoji-harry/.openclaw/agents/researcher/agent",
+        "identity": {
+          "name": "Researcher",
+          "emoji": "\ud83d\udd0e",
+          "theme": "curious, evidence-led research"
+        },
+        "subagents": {
+          "allowAgents": []
+        }
+      },
+      "writer": {
+        "name": "writer",
+        "workspace": "/home/ugoji-harry/.openclaw/workspace/writer",
+        "agentDir": "/home/ugoji-harry/.openclaw/agents/writer/agent",
+        "identity": {
+          "name": "Writer",
+          "emoji": "\u270d\ufe0f",
+          "theme": "clear, audience-aware writing"
+        },
+        "subagents": {
+          "allowAgents": []
+        }
+      },
+      "reviewer": {
+        "name": "reviewer",
+        "workspace": "/home/ugoji-harry/.openclaw/workspace/reviewer",
+        "agentDir": "/home/ugoji-harry/.openclaw/agents/reviewer/agent",
+        "identity": {
+          "name": "Reviewer",
+          "emoji": "\ud83d\udd0d",
+          "theme": "careful, independent review"
+        },
+        "subagents": {
+          "allowAgents": []
+        }
+      },
+      "muna": {
+        "name": "muna",
+        "workspace": "/home/ugoji-harry/.openclaw/workspace/muna",
+        "agentDir": "/home/ugoji-harry/.openclaw/agents/muna/agent",
+        "identity": {
+          "name": "muna"
+        },
+        "model": "ollama/qwen3:4b",
+        "thinkingDefault": "low"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "ollama": {
+        "baseUrl": "http://127.0.0.1:11434",
+        "apiKey": "ollama-local",
+        "api": "ollama",
+        "timeoutSeconds": 300,
+        "models": [
+          {
+            "id": "llama3.1:8b",
+            "name": "llama3.1:8b",
+            "reasoning": false,
+            "input": [
+              "text"
+            ],
+            "contextTokens": 8192,
+            "maxTokens": 1024,
+            "params": {
+              "num_ctx": 8192,
+              "keep_alive": "30m"
+            }
+          },
+          {
+            "id": "qwen3:8b",
+            "name": "qwen3:8b",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "contextTokens": 6144,
+            "maxTokens": 1536,
+            "params": {
+              "num_ctx": 6144,
+              "keep_alive": "30m",
+              "thinking": false
+            }
+          },
+          {
+            "id": "qwen3:4b",
+            "name": "qwen3:4b",
+            "reasoning": true,
+            "input": [
+              "text"
+            ],
+            "contextTokens": 8192,
+            "maxTokens": 1536,
+            "params": {
+              "num_ctx": 8192,
+              "keep_alive": "30m"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "tools": {
+    "profile": "minimal",
+    "alsoAllow": [
+      "nodes"
+    ],
+    "deny": [
+      "group:runtime",
+      "group:fs",
+      "group:web",
+      "group:ui",
+      "group:automation",
+      "computer",
+      "message",
+      "presence",
+      "ask_user",
+      "tts"
+    ],
+    "toolSearch": false
+  },
+  "talk": {
+    "agentId": "muna",
+    "realtime": {
+      "mode": "stt-tts"
+    }
+  },
+  "tts": {
+    "provider": "tts-local-cli",
+    "providers": {
+      "tts-local-cli": {
+        "command": "/home/ugoji-harry/.local/piper/say.sh",
+        "args": [
+          "{{OutputPath}}",
+          "{{Text}}"
+        ],
+        "outputFormat": "wav",
+        "timeoutMs": 30000
+      }
+    }
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 18789,
+    "bind": "loopback",
+    "tailscale": {
+      "mode": "off"
+    }
+  }
+}
